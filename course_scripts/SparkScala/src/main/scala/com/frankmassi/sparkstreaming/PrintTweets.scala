@@ -1,6 +1,6 @@
 
 
-package com.sundogsoftware.sparkstreaming
+package com.frankmassi.sparkstreaming
 
 import org.apache.spark._
 import org.apache.spark.SparkContext._
