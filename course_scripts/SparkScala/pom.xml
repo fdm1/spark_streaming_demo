@@ -48,6 +48,12 @@
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
+      <artifactId>spark-streaming-twitter_${spark.libversion}</artifactId>
+      <version>1.6.3</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.spark</groupId>
       <artifactId>spark-streaming_${spark.libversion}</artifactId>
       <version>${spark.subversion}</version>
       <scope>provided</scope>
