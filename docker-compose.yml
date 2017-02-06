@@ -1,5 +1,5 @@
 master:
-  image: gettyimages/spark:1.6.2-hadoop-2.6
+  image: gettyimages/spark
   command: bin/spark-class org.apache.spark.deploy.master.Master -h master
   hostname: master
   environment:
@@ -26,7 +26,7 @@ master:
     - ./course_scripts:/course_scripts
 
 worker:
-  image: gettyimages/spark:1.6.2-hadoop-2.6
+  image: gettyimages/spark
   command: bin/spark-class org.apache.spark.deploy.worker.Worker spark://master:7077
   hostname: worker
   environment:

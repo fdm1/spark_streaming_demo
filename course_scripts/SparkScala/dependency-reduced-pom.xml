@@ -66,7 +66,7 @@
     <dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-core_2.11</artifactId>
-      <version>1.5.2</version>
+      <version>2.1.0</version>
       <scope>provided</scope>
       <exclusions>
         <exclusion>
@@ -80,6 +80,10 @@
         <exclusion>
           <artifactId>chill-java</artifactId>
           <groupId>com.twitter</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>xbean-asm5-shaded</artifactId>
+          <groupId>org.apache.xbean</groupId>
         </exclusion>
         <exclusion>
           <artifactId>hadoop-client</artifactId>
@@ -110,8 +114,8 @@
           <groupId>org.apache.curator</groupId>
         </exclusion>
         <exclusion>
-          <artifactId>javax.servlet</artifactId>
-          <groupId>org.eclipse.jetty.orbit</groupId>
+          <artifactId>javax.servlet-api</artifactId>
+          <groupId>javax.servlet</groupId>
         </exclusion>
         <exclusion>
           <artifactId>commons-lang3</artifactId>
@@ -166,31 +170,35 @@
           <groupId>commons-net</groupId>
         </exclusion>
         <exclusion>
-          <artifactId>akka-remote_2.11</artifactId>
-          <groupId>com.typesafe.akka</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>akka-slf4j_2.11</artifactId>
-          <groupId>com.typesafe.akka</groupId>
-        </exclusion>
-        <exclusion>
           <artifactId>json4s-jackson_2.11</artifactId>
           <groupId>org.json4s</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>jersey-client</artifactId>
+          <groupId>org.glassfish.jersey.core</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>jersey-common</artifactId>
+          <groupId>org.glassfish.jersey.core</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>jersey-server</artifactId>
-          <groupId>com.sun.jersey</groupId>
+          <groupId>org.glassfish.jersey.core</groupId>
         </exclusion>
         <exclusion>
-          <artifactId>jersey-core</artifactId>
-          <groupId>com.sun.jersey</groupId>
+          <artifactId>jersey-container-servlet</artifactId>
+          <groupId>org.glassfish.jersey.containers</groupId>
         </exclusion>
         <exclusion>
-          <artifactId>mesos</artifactId>
-          <groupId>org.apache.mesos</groupId>
+          <artifactId>jersey-container-servlet-core</artifactId>
+          <groupId>org.glassfish.jersey.containers</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty-all</artifactId>
+          <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
         <exclusion>
@@ -230,10 +238,6 @@
           <groupId>oro</groupId>
         </exclusion>
         <exclusion>
-          <artifactId>tachyon-client</artifactId>
-          <groupId>org.tachyonproject</groupId>
-        </exclusion>
-        <exclusion>
           <artifactId>pyrolite</artifactId>
           <groupId>net.razorvine</groupId>
         </exclusion>
@@ -241,20 +245,42 @@
           <artifactId>py4j</artifactId>
           <groupId>net.sf.py4j</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>spark-tags_2.11</artifactId>
+          <groupId>org.apache.spark</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>commons-crypto</artifactId>
+          <groupId>org.apache.commons</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-streaming_2.11</artifactId>
-      <version>1.5.2</version>
+      <version>2.1.0</version>
       <scope>provided</scope>
+      <exclusions>
+        <exclusion>
+          <artifactId>spark-tags_2.11</artifactId>
+          <groupId>org.apache.spark</groupId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-sql_2.11</artifactId>
-      <version>1.5.2</version>
+      <version>2.1.0</version>
       <scope>provided</scope>
       <exclusions>
+        <exclusion>
+          <artifactId>univocity-parsers</artifactId>
+          <groupId>com.univocity</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>spark-sketch_2.11</artifactId>
+          <groupId>org.apache.spark</groupId>
+        </exclusion>
         <exclusion>
           <artifactId>spark-catalyst_2.11</artifactId>
           <groupId>org.apache.spark</groupId>
@@ -271,6 +297,10 @@
           <artifactId>jackson-databind</artifactId>
           <groupId>com.fasterxml.jackson.core</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>spark-tags_2.11</artifactId>
+          <groupId>org.apache.spark</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
   </dependencies>
@@ -278,7 +308,7 @@
     <scala.version>2.10.4</scala.version>
     <encoding>UTF-8</encoding>
     <maven.compiler.source>1.7</maven.compiler.source>
-    <spark.version>1.5.2</spark.version>
+    <spark.version>2.1.0</spark.version>
     <spark.scala.version>2.11</spark.scala.version>
     <maven.compiler.target>1.7</maven.compiler.target>
   </properties>
