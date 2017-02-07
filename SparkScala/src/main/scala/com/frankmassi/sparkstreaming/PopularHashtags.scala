@@ -27,7 +27,7 @@ object PopularHashtags {
 
     val filters = Array("Trump")
     // Create a DStream from Twitter using our streaming context
-    val tweets = TwitterUtils.createStream(ssc, None)
+    val tweets = TwitterUtils.createStream(ssc, None, filters)
     
     // Now extract the text of each status update into DStreams using map()
     val statuses = tweets.map(status => status.getText())
