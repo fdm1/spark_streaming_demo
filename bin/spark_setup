@@ -1,4 +1,5 @@
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+#!/bin/bash
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/.. && pwd )"
 
 cd $DIR
 
@@ -21,3 +22,5 @@ do
 done
 
 # mvn archetype:generate -B -DarchetypeCatalog=https://github.com/mbonaci/spark-archetype-scala/raw/master/archetype-catalog.xml -DarchetypeRepository=https://github.com/mbonaci/spark-archetype-scala/raw/master -DarchetypeGroupId=org.sia -DarchetypeArtifactId=spark-archetype-scala -DarchetypeVersion=0.9 -DgroupId=com.frankmassi -DartifactId=UdemySparkScala -Dversion=0.1 -Dpackage=org.sijaset
+
+# vi: ft=sh
