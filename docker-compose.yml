@@ -23,6 +23,9 @@ master:
   volumes:
     - ./docker-spark/conf/master:/conf
     - ./docker-spark/data:/tmp/data
+    - ./twitter_utils:/twitter_utils
+    - ./datasets:/datasets
+    - ./SparkScala:/SparkScala
     - ./course_scripts:/course_scripts
 
 worker:
@@ -50,4 +53,7 @@ worker:
   volumes:
     - ./docker-spark/conf/worker:/conf
     - ./docker-spark/data:/tmp/data
+    - ./twitter_utils:/twitter_utils
+    - ./datasets:/datasets
+    - ./SparkScala:/SparkScala
     - ./course_scripts:/course_scripts
