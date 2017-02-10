@@ -1,30 +1,50 @@
 import json
 import logging
+import os
 import sys
 import tweepy
 from kafka import KafkaProducer
-# from kafka.errors import KafkaError
-# from kafka.client import KafkaClient
+from kafka.errors import BrokerNotAvailableError, NoBrokersAvailable
+from time import sleep
 
-from twitter_creds import *
+consumer_token = os.environ['consumer_token']
+consumer_secret = os.environ['consumer_secret']
+access_token = os.environ['access_token']
+access_token_secret = os.environ['access_token_secret']
+
 
 # http://docs.tweepy.org/en/v3.5.0/streaming_how_to.html
 #override tweepy.StreamListener to add logic to on_status
 class MyStreamListener(tweepy.StreamListener):
 
     def __init__(self, filter_terms=None):
-        self.logger = logging.getLogger()
+        self.logger = logging.getLogger(__file__)
+        # self.logger.setLevel(logging.warn)
 
         self.filters = dict(async=True)
         if filter_terms:
             self.filters.update(track=filter_terms)
         else:
+            # at a minimum, enforce only tweets with geolocation
             self.filters.update(locations=[-180,-90,180,90])
 
         self.api = self.get_auth_api()
-        self.producer = KafkaProducer(bootstrap_servers='kafka:9092',
-                                      value_serializer=lambda v: json.dumps(v).encode('utf-8'))
+        self.producer = None
+        while not self.producer:
+             self.initialize_kafka_producer()
+
         self.run_stream()
+
+    def initialize_kafka_producer(self):
+        self.logger.warn('Attempting to initialize Kafka Producer')
+        try:
+            self.producer = KafkaProducer(bootstrap_servers=os.environ['KAFKA'],
+                                          value_serializer=lambda v: json.dumps(v).encode('utf-8'))
+            self.logger.warn('Kafka Producer initialized!')
+        except (BrokerNotAvailableError, NoBrokersAvailable):
+            self.logger.warn('Kafka server not ready yet')
+            sleep(2)
+            return False
 
     # http://docs.tweepy.org/en/v3.5.0/auth_tutorial.html#auth-tutorial
     def get_auth_api(self):
@@ -37,7 +57,7 @@ class MyStreamListener(tweepy.StreamListener):
         if text:
             self.producer.send('tweets', text)
             self.producer.flush()
-            print(text)
+            # self.logger.warn(text)
 
     def on_error(self, status_code):
         if status_code == 420:
@@ -46,8 +66,7 @@ class MyStreamListener(tweepy.StreamListener):
 
     def run_stream(self):
         # myStreamListener = MyStreamListener()
-        self.logger.info('Initializing stream')
-        print('Initializing stream: {}'.format(self.filters))
+        self.logger.warn('Initializing stream')
         myStream = tweepy.Stream(auth = self.api.auth, listener=self)
         myStream.filter(**self.filters)
 
