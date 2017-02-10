@@ -21,7 +21,13 @@ project/plugins/project/
 docker-spark/
 datasets/
 
+# creds
 *.creds
+*twitter_creds.py
+
+# python
+*.pyc
+__pycache__/
 
 # Intellij
 .idea/
