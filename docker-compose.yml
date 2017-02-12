@@ -29,14 +29,16 @@ services:
       - kafka
     env_file: ./twitter.env
 
-  spark_master:
-    image: gettyimages/spark
+  master:
+    build:
+      context: .
+      dockerfile: Dockerfile.spark_scala
     command: bin/spark-class org.apache.spark.deploy.master.Master -h master
     hostname: master
     environment:
       MASTER: spark://master:7077
-      SPARK_CONF_DIR: /conf
-      SPARK_PUBLIC_DNS: localhost
+      CONF_DIR: /conf
+      PUBLIC_DNS: localhost
     expose:
       - 7001
       - 7002
@@ -55,22 +57,22 @@ services:
       - ./docker-spark/conf/master:/conf
       - ./docker-spark/data:/tmp/data
       - ./pyspark:/pyspark
-    links:
-      - kafka
-      - zookeeper
+    # links:
+    #   - zookeeper
 
-  spark_worker:
-    image: gettyimages/spark
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.spark_scala
     command: bin/spark-class org.apache.spark.deploy.worker.Worker spark://master:7077
     hostname: worker
     environment:
-      SPARK_CONF_DIR: /conf
-      SPARK_WORKER_CORES: 2
-      SPARK_WORKER_MEMORY: 1g
-      SPARK_WORKER_PORT: 8881
-      SPARK_WORKER_WEBUI_PORT: 8081
-      SPARK_PUBLIC_DNS: localhost
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      CONF_DIR: /conf
+      WORKER_CORES: 2
+      WORKER_MEMORY: 1g
+      WORKER_PORT: 8881
+      WORKER_WEBUI_PORT: 8081
+      PUBLIC_DNS: localhost
     links:
       - master
       - zookeeper
