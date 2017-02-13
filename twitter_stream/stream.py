@@ -72,7 +72,7 @@ class MyStreamListener(tweepy.StreamListener):
     def on_limit(self, track):
         self.logger.warn('Stream is being limited: {}'.format(track))
 
-    def on_exception(self, execption):
+    def on_exception(self, exception):
         self.logger.warn('Stream raised exception: {}'.format(exception))
 
 def run_stream(stream_args):
