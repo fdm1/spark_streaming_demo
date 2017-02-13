@@ -51,7 +51,7 @@ class MyStreamListener(tweepy.StreamListener):
         return tweepy.API(auth)
 
     def on_data(self, data):
-        print("data: {}".format(data))
+        # print("data: {}".format(data))
         text = json.loads(data).get(u'text')
         # self.logger.warn(data)
         if text:
