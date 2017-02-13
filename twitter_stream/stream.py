@@ -19,7 +19,7 @@ class MyStreamListener(tweepy.StreamListener):
 
     def __init__(self, filter_terms=None):
         self.logger = logging.getLogger(__file__)
-        # self.logger.setLevel(logging.warn)
+        self.logger.setLevel(logging.WARN)
 
         self.filters = dict(async=True)
         if filter_terms:
@@ -33,12 +33,10 @@ class MyStreamListener(tweepy.StreamListener):
         while not self.producer:
              self.initialize_kafka_producer()
 
-        self.run_stream()
-
     def initialize_kafka_producer(self):
         self.logger.warn('Attempting to initialize Kafka Producer')
         try:
-            self.producer = KafkaProducer(bootstrap_servers=os.environ['KAFKA'],
+            self.producer = KafkaProducer(bootstrap_servers=os.environ['KAFKA_SERVER'],
                                           value_serializer=lambda v: json.dumps(v).encode('utf-8'))
             self.logger.warn('Kafka Producer initialized!')
         except (BrokerNotAvailableError, NoBrokersAvailable):
@@ -53,23 +51,37 @@ class MyStreamListener(tweepy.StreamListener):
         return tweepy.API(auth)
 
     def on_data(self, data):
+        print("data: {}".format(data))
         text = json.loads(data).get(u'text')
+        # self.logger.warn(data)
         if text:
             self.producer.send('tweets', text)
             self.producer.flush()
+            # print(text)
             # self.logger.warn(text)
 
     def on_error(self, status_code):
+        self.logger.warn("TwitterStreamError: {}".format(status_code))
         if status_code == 420:
             #returning False in on_data disconnects the stream
             return False
 
-    def run_stream(self):
-        # myStreamListener = MyStreamListener()
-        self.logger.warn('Initializing stream')
-        myStream = tweepy.Stream(auth = self.api.auth, listener=self)
-        myStream.filter(**self.filters)
+    def on_connect(self):
+        self.logger.warn('Stream Initialized!')
+
+    def on_limit(self, track):
+        self.logger.warn('Stream is being limited: {}'.format(track))
+
+    def on_exception(self, execption):
+        self.logger.warn('Stream raised exception: {}'.format(exception))
+
+def run_stream(stream_args):
+    # myStreamListener = MyStreamListener()
+    stream = MyStreamListener(stream_args)
+    stream.logger.warn('Initializing stream')
+    myStream = tweepy.Stream(auth = stream.api.auth, listener=stream)
+    myStream.filter(**stream.filters)
 
 if __name__ == '__main__':
-    MyStreamListener(sys.argv[1:])
+    run_stream(sys.argv[1:])
 

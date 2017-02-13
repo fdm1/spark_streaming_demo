@@ -9,15 +9,15 @@ import logging
 from pyspark import SparkContext
 from pyspark.streaming import StreamingContext
 from pyspark.streaming.kafka import KafkaUtils
+from pyspark.streaming.kafka import OffsetRange
 import os
 
 kafka = 'kafka:9092'
-zookeeper = 'zookeeper:2181'
 topic = 'tweets'
 
-def create_rdd(sc, host=zookeeper):
-    from pyspark.streaming.kafka import OffsetRange
-    return KafkaUtils.createRDD(sc, {'metadata.broker.list': host}, [OffsetRange('tweets', 1,0,100)])
+def create_rdd(sc, host=kafka, topic=topic, partition=0, min_offset=0, max_offset=1):
+    os = OffsetRange(topic, partition, min_offset, max_offset)
+    return KafkaUtils.createRDD(sc, {'metadata.broker.list': host}, [os])
 
 def get_stream(sc, host=kafka):
     ssc = StreamingContext(sc, 1)

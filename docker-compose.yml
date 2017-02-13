@@ -24,7 +24,7 @@ services:
       dockerfile: Dockerfile.twitter
     restart: always
     environment:
-      KAFKA: kafka:9092
+      KAFKA_SERVER: kafka:9092
     links:
       - kafka
     env_file: ./twitter.env
