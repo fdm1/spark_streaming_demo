@@ -17,7 +17,7 @@ def create_rdd(sc, host=kafka, topic=topic, partition=0, min_offset=0, max_offse
     return KafkaUtils.createRDD(sc, {'metadata.broker.list': host}, [offset])
 
 def get_stream(sc, host=kafka):
-    ssc = StreamingContext(sc, 1)
+    ssc = StreamingContext(sc, 5)
     kvs = KafkaUtils.createDirectStream(ssc, [topic], {'metadata.broker.list': host})
     return ssc, kvs
 

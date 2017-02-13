@@ -1,6 +1,6 @@
 #!/bin/bash
 docker-compose up -d
-docker-compose exec spark_master pyspark
+docker-compose exec master pyspark
 # docker-compose down
 
 # vi: ft=sh
