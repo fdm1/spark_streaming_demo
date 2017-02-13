@@ -30,9 +30,7 @@ services:
     env_file: ./twitter.env
 
   master:
-    build:
-      context: .
-      dockerfile: Dockerfile.spark_scala
+    image: gettyimages/spark:2.1.0-hadoop-2.7
     command: bin/spark-class org.apache.spark.deploy.master.Master -h master
     hostname: master
     environment:
@@ -57,13 +55,11 @@ services:
       - ./docker-spark/conf/master:/conf
       - ./docker-spark/data:/tmp/data
       - ./pyspark:/pyspark
-    # links:
-    #   - zookeeper
+    links:
+      - kafka
 
   worker:
-    build:
-      context: .
-      dockerfile: Dockerfile.spark_scala
+    image: gettyimages/spark:2.1.0-hadoop-2.7
     command: bin/spark-class org.apache.spark.deploy.worker.Worker spark://master:7077
     hostname: worker
     environment:
@@ -75,7 +71,7 @@ services:
       PUBLIC_DNS: localhost
     links:
       - master
-      - zookeeper
+      - kafka
     expose:
       - 7012
       - 7013
