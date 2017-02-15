@@ -26,12 +26,16 @@ services:
     restart: always
     environment:
       KAFKA_SERVER: kafka:9092
+    volumes:
+      - ./twitter_stream:/twitter_stream
     links:
       - kafka
     env_file: ./twitter.env
 
   master:
-    image: gettyimages/spark:2.1.0-hadoop-2.7
+    build:
+      context: .
+      dockerfile: Dockerfile.spark
     command: bin/spark-class org.apache.spark.deploy.master.Master -h master
     hostname: master
     environment:
@@ -55,12 +59,14 @@ services:
     volumes:
       - ./docker-spark/conf/master:/conf
       - ./docker-spark/data:/tmp/data
-      - ./pyspark:/pyspark
+      - ./spark:/spark
     links:
       - kafka
 
   worker:
-    image: gettyimages/spark:2.1.0-hadoop-2.7
+    build:
+      context: .
+      dockerfile: Dockerfile.spark
     command: bin/spark-class org.apache.spark.deploy.worker.Worker spark://master:7077
     hostname: worker
     environment:
@@ -85,4 +91,3 @@ services:
     volumes:
       - ./docker-spark/conf/worker:/conf
       - ./docker-spark/data:/tmp/data
-      - ./pyspark:/pyspark
