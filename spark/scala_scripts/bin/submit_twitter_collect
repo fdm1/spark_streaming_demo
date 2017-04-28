@@ -1,10 +1,10 @@
 #!/bin/sh
 
+if [[ $1 != "no-compile" ]]; then
+  sbt assembly
+fi
+
 spark-submit \
     --class "com.frankmassi.twitter_analyzer.Collect" \
     --master local[4] \
-    $SPARK_HOME/scala_scripts/target/scala-2.11/SparkStreaming1-assembly-1.0.jar
- #  ${YOUR_OUTPUT_DIR:-/tmp/tweets} \ */
- #  ${NUM_TWEETS_TO_COLLECT:-10000} \ */
- #  ${OUTPUT_FILE_INTERVAL_IN_SECS:-10} \ */
- #  ${OUTPUT_FILE_PARTITIONS_EACH_INTERVAL:-1}  */
+    $SPARK_HOME/scala_scripts/compiled_jars/SparkStreaming1-assembly-0.1.jar
