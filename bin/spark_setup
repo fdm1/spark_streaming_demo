@@ -7,9 +7,9 @@ if [ ! -d docker-spark ]; then
   git clone https://github.com/gettyimages/docker-spark
 fi
 
-if [ ! -d datasets ]; then
-  git clone https://github.com/ChitturiPadma/datasets
-fi
+# if [ ! -d datasets ]; then
+#   git clone https://github.com/ChitturiPadma/datasets
+# fi
 
 # cp docker-spark/docker-compose.yml .
 #
