@@ -33,8 +33,6 @@ object rddFunctions {
   def getPipedFlatMap(rdd: RDD[String]): RDD[String] = {
     rdd.pipe("python ./pipe_scripts/wordlist_flatmap.py " + tweetSeparatorString)
   }
-  
-
 }
 
 case class TweetData(
@@ -88,10 +86,13 @@ object Collect {
     val tweetWords = rawStatusText.map(rddFunctions.getCleanedStatusText)
     val pipedWords = tweetWords.transform(rddFunctions.getPipedFlatMap(_))
     val tweetDataRDD = pipedWords.map(piped_json => gson.fromJson(piped_json, classOf[TweetWordHash]))
-    
+
     val windowedRDD = tweetDataRDD.window(Seconds(900), Seconds(15))
     // windowedRDD.print
-    windowedRDD.map(r => r.word).countByValue(1).print
+    tweetDataRDD.map(r => (r.hashtag, 1))
+                .reduceByKeyAndWindow(_ + _, Seconds(900))
+                .map { case (topic, count) => (count, topic)}
+                .transform(_.sortByKey(false)).print
     // windowedRDD.map(r => gson.toJson(r)).print
     // windowedRDD.transform(r => {
     //   for (w <- r.words) {
@@ -137,38 +138,54 @@ object Collect {
 
 //
 //
-// import com.google.common.collect.ImmutableMap
-// import com.google.gson.Gson
-//
-// val gson = new Gson()
-//
-// case class TweetData(uuid: String,
-//                      raw_text: String,
-//                      words: Array[String],
-//                      // polarity: Double,
-//                      hashtags: Array[String],
-//                      is_retweet: String
-//                     )
-//
-// val t1 = TweetData("a", "hi you", Array("hi", "you"), Array(""), "false")
-// val t2 = TweetData("b", "hi there #yo", Array("hi", "there"), Array("#yo", "#you"), "true")
-// val t3 = TweetData("c", "hey you #you", Array("hey", "you"), Array("#you"), "true")
-// val t4 = TweetData("d", "hi guy hey #you", Array("hi", "guy", "hey"), Array("#you"), "false")
-// val t = List(t1, t2, t3, t4)
-//
-// {"uuid":"049521f2-972f-43fb-b4f1-e34f2684c17d","raw_text":"https://t.co/iadEDv4miK","words":["againpresid","pdb","daili","bannon","strike"],"hashtags":[""],"is_retweet":"true"}
-// {"uuid":"06179aef-7eb1-443d-b758-6d03b02f1b3a","raw_text":"Republican Sens. John McCain, Lindsey Graham ask Pres. Trump for evidence of wiretapping claims… https://t.co/kQauG5O6rK","words":["ask","evid","sen","republican","wiretap","mccain","claim","john","lindsey","graham","pre"],"hashtags":[""],"is_retweet":"true"}
-// {"uuid":"d7d0a458-ae0d-4bbe-97cd-bd730d9477aa","raw_text":"The Trump White House: \"a well-oiled machine.\" Oiled apparently by Exxon-Mobil. https://t.co/DbBBW2zh6H","words":["appar","white","oil","hou","machin","welloil","exxonmobil"],"hashtags":[""],"is_retweet":"true"}
-// {"uuid":"9c38e7a3-e9e6-4fc0-afaf-d8a390c3f58e","raw_text":"FBI Director James Comey was \"incredulous\" over President Trump\u0027s tweets, a source says https://t.co/Aop0fNfxuH https://t.co/5FJEGS30mo","words":["sourc","director","fbi","tweet","jame","comey","incredul"],"hashtags":[""],"is_retweet":"true"}
-// {"uuid":"023cf49c-1f59-408b-bebf-699b34d0c429","raw_text":"@IvankaTrump  @realDonaldTrump CONGRATULATIONS on your nomination for Nobel Peace Prize Mr. President!… https://t.co/Sk82nia5RH","words":["nomin","nobel","congratul","presid","prize","peac"],"hashtags":[""],"is_retweet":"false"}
-// {"uuid":"8b43eba5-2cd1-41c6-bf3f-5d1593f1126d","raw_text":"@SpeakerRyan Read this. This is the real danger Americans are facing today, the fear they rightly feel. How do we f… https://t.co/qkymiyI0yB","words":["face","danger","read","american","feel","right","fear","today","real"],"hashtags":[""],"is_retweet":"false"}
-// {"uuid":"64fd7ef2-1bf3-420c-970e-59de1743f8a3","raw_text":"@MalcolmNance @morningmika @amjoyshow Her friendship and devotion to Trump. It\u0027s hard to see your friend deteriorate in front of ur👀","words":["deterior","friend","front","see","devot","friendship","hard"],"hashtags":[""],"is_retweet":"false"}
-// {"uuid":"583012d2-20ca-483a-bf1f-4227d1209d25","raw_text":"https://t.co/kLWwtDxa6R","words":["protect","stop","know","claim","attack","truth","non"],"hashtags":[""],"is_retweet":"true"}
-// {"uuid":"ca7d5d44-9019-49f3-afe0-0fe9b286c402","raw_text":"I am calling for a total and complete shutdown on Donald Trump being POTUS until we can figure out what the hell is going on","words":["complet","hell","potu","total","shutdown","figur","call"],"hashtags":[""],"is_retweet":"true"}
-// {"uuid":"c6a10364-9d72-429b-9961-e33f821f1f47","raw_text":"DISGUSTING TRUMP \u0026 REPUBLICANS!!! Trump will kill the Great Lakes: Stephen Henderson https://t.co/gYsUQWWKTp via @USATODAY","words":["disgust","vium","republican","stephen","lake","kill","great","henderson"],"hashtags":[""],"is_retweet":"false"}
+import com.google.common.collect.ImmutableMap
+import com.google.gson.Gson
+
+val gson = new Gson()
+
+case class TweetData(uuid: String,
+                     raw_text: String,
+                     words: Array[String],
+                     // polarity: Double,
+                     hashtags: Array[String],
+                     is_retweet: String
+                    )
+
+val t1 = TweetData("a", "hi you", Array("hi", "you"), Array(""), "false")
+val t2 = TweetData("b", "hi there #yo", Array("hi", "there"), Array("#yo", "#you"), "true")
+val t3 = TweetData("c", "hey you #you", Array("hey", "you"), Array("#you"), "true")
+val t4 = TweetData("d", "hi guy hey #you", Array("hi", "guy", "hey"), Array("#you"), "false")
+val t = List(t1, t2, t3, t4)
 
 
-// val tweets = sc.parallelize(t)
+
+val tweets = sc.parallelize(t)
+
+case class TweetWordHash(
+  uuid: String,
+  word: String,
+  hashtag: String="",
+  is_retweet: String
+)
+
+val data = List(TweetWordHash("a", "hi", "#hi", "false"),
+                TweetWordHash("a", "there", "#hi", "false"),
+                TweetWordHash("b", "hi", "#hi", "false"),
+                TweetWordHash("b", "hi", "#ho", "false"),
+                TweetWordHash("c", "yo", "", "true"))
+val tweetDataRDD = sc.parallelize(data)
+
+val wordCounts = (tweetDataRDD.map(r => (r.word, 1))
+                             .reduceByKey(_ + _))
+
+val topWords = sc.parallelize(wordCounts.sortBy(_._2, false).take(2))
+
+val wordHashCounts = (tweetDataRDD.map(r => ((r.word, r.hashtag, r.is_retweet), 1))
+                                 .reduceByKey(_ + _)
+                                 .map(r => (r._1._1, (r._1._2, r._1._3, r._2))))
+wordHashCounts
+val topWordHashCounts = topWords.join(wordHashCounts).map(r => ((r._1, r._2._1), r._2._2))
+//
 // val df = (tweets.toDF
 //               .withColumn("words", explode($"words")).withColumnRenamed("words", "word")
 //               .withColumn("hashtags", explode($"hashtags")).withColumnRenamed("hashtags", "hashtag"))
