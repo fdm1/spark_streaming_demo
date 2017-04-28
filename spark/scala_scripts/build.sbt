@@ -1,4 +1,5 @@
 lazy val root = (project in file(".")).settings(
+
     name := "SparkStreaming1",
     version := "1.0",
     scalaVersion := "2.11.8",
@@ -19,6 +20,8 @@ lazy val root = (project in file(".")).settings(
       case x =>
         val oldStrategy = (assemblyMergeStrategy in assembly).value
         oldStrategy(x)
-    }
+    },
+
+    unmanagedBase := baseDirectory.value / "external_jars"
   )
 
