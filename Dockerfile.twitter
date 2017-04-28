@@ -6,4 +6,4 @@ WORKDIR /twitter_stream
 
 RUN pip install --requirement requirements.txt
 
-CMD [ "python", "stream.py", "trump" ]
+CMD [ "python", "stream.py" ]

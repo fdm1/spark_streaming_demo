@@ -17,13 +17,13 @@ access_token_secret = os.environ['access_token_secret']
 #override tweepy.StreamListener to add logic to on_status
 class MyStreamListener(tweepy.StreamListener):
 
-    def __init__(self, filter_terms=None, kafka=True, run=True):
+    def __init__(self, tweet_topics=None, kafka=True, run=True):
         self.logger = logging.getLogger(__file__)
         self.logger.setLevel(logging.WARN)
 
         self.filters = dict(async=True)
-        if filter_terms:
-            self.filters.update(track=filter_terms)
+        if tweet_topics:
+            self.filters.update(track=tweet_topics)
         else:
             # at a minimum, enforce only tweets with geolocation
             self.filters.update(locations=[-180,-90,180,90])
@@ -40,7 +40,7 @@ class MyStreamListener(tweepy.StreamListener):
     def initialize_kafka_producer(self):
         self.logger.warn('Attempting to initialize Kafka Producer')
         try:
-            self.producer = KafkaProducer(bootstrap_servers=os.environ['KAFKA_SERVER'],
+            self.producer = KafkaProducer(bootstrap_servers=os.environ['KAFKA_CONNECT'],
                                           value_serializer=lambda v: json.dumps(v).encode('utf-8'))
             self.logger.warn('Kafka Producer initialized!')
         except (BrokerNotAvailableError, NoBrokersAvailable):
@@ -58,7 +58,7 @@ class MyStreamListener(tweepy.StreamListener):
         payload = json.loads(data)
         if payload.get('text'):
             if self.use_kafka:
-                self.producer.send('tweets', payload)
+                self.producer.send('tweets', {'text': payload['text']})
                 self.producer.flush()
             else:
                 self.logger.warn(payload)
@@ -84,5 +84,8 @@ class MyStreamListener(tweepy.StreamListener):
         stream.filter(**self.filters)
 
 if __name__ == '__main__':
-    MyStreamListener(sys.argv[1:])
+    topics = sys.argv[1:]
+    if not topics:
+        topics = [t.strip() for t in os.environ.get('TWEET_TOPICS').split(',')]
+    MyStreamListener(tweet_topics=topics)
 

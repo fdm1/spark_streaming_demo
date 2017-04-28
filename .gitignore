@@ -22,7 +22,7 @@ docker-spark/
 datasets/
 
 # creds
-*.env
+*.creds.env
 
 # python
 *.pyc

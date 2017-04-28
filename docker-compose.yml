@@ -1,12 +1,12 @@
 version: '2'
 services:
   zookeeper:
-    image: wurstmeister/zookeeper
+    image: wurstmeister/zookeeper:3.4.6
     ports:
       - 2181:2181
 
   kafka:
-    image: wurstmeister/kafka
+    image: wurstmeister/kafka:0.10.0.1-2
     restart: always
     expose:
       - 9092
@@ -15,6 +15,7 @@ services:
     environment:
       KAFKA_ADVERTISED_HOST_NAME: kafka
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LOG_RETENTION_BYTES: 50000000
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
@@ -24,12 +25,14 @@ services:
       dockerfile: Dockerfile.twitter
     restart: always
     environment:
-      KAFKA_SERVER: kafka:9092
+      KAFKA_CONNECT: kafka:9092
+      # comma-separated string of tweet_filters
+      TWEET_TOPICS: "trump"
     volumes:
       - ./twitter_stream:/twitter_stream
     links:
       - kafka
-    env_file: ./twitter.env
+    env_file: ./twitter.creds.env
 
   master:
     build:
@@ -38,9 +41,10 @@ services:
     command: bin/spark-class org.apache.spark.deploy.master.Master -h master
     hostname: master
     environment:
-      MASTER: spark://master:7077
       CONF_DIR: /conf
+      MASTER: spark://master:7077
       PUBLIC_DNS: localhost
+    env_file: ./spark.env
     expose:
       - 7001
       - 7002
@@ -75,6 +79,7 @@ services:
       WORKER_PORT: 8881
       WORKER_WEBUI_PORT: 8081
       PUBLIC_DNS: localhost
+    env_file: ./spark.env
     links:
       - master
       - kafka
