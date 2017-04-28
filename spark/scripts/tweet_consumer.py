@@ -68,7 +68,20 @@ def get_word_lists(record):
     custom_stopwords = [w.strip() for w in os.environ.get('custom_stopwords', '').split(',')]
     s=set(stopwords.words('english') + custom_stopwords)
     words = [w for w in TextBlob(record['text']).words if w not in s and len(w) > 2 and '…' not in w]
-    return {'words': words, 'polarity': record['polarity']}
+    from uuid import uuid4
+    return {'words': words, 'polarity': record['polarity'], 'uuid': uuid4()}
+
+
+def get_record_stats(record):
+    from statistics import mean, stdev, variance
+    word = record[0]
+    count = len(record[1])
+    _mean = mean(record[1])
+    _stdev, _variance = None, None
+    if count > 1:
+        _stdev = stdev(record[1])
+        _variance = variance(record[1])
+    return {"word": word, "stats": { 'count': count, 'mean': _mean, 'stdev': _stdev, 'variance': _variance}}
 
 
 if __name__ == "__main__":
@@ -82,23 +95,18 @@ if __name__ == "__main__":
     words = processed.map(get_word_lists)
 
     
-    flat_with_polarity = words.flatMap(lambda x: ([(w, x['polarity']) for w in set(x['words'])]))
-    windowed = flat_with_polarity.window(15*60,10)
-    grouped_flat = windowed.groupByKey()
+    windowed = words.window(15*60,10)
+    counter = windowed.map(lambda x: (1, x['uuid'])).groupByKey().map(lambda x: len(x[1]))
 
-    def get_record_stats(record):
-        from statistics import mean, stdev, variance
-        word = record[0]
-        count = len(record[1])
-        _mean = mean(record[1])
-        _stdev, _variance = None, None
-        if count > 1:
-            _stdev = stdev(record[1])
-            _variance = variance(record[1])
-        return {"word": word, "stats": { 'count': count, 'mean': _mean, 'stdev': _stdev, 'variance': _variance}}
+    flat_with_polarity = windowed.flatMap(lambda x: ([(w, x['polarity']) for w in set(x['words'])]))
 
-    averaged_flat = grouped_flat.map(get_record_stats)
-    averaged_flat.transform(lambda rdd: rdd.sortBy(lambda x: x['stats']['count'], ascending=False)).pprint()
+    grouped_flat = flat_with_polarity.groupByKey()
+
+    stats = grouped_flat.map(get_record_stats)
+    sorted_stats = stats.transform(lambda rdd: rdd.sortBy(lambda x: x['stats']['count'], ascending=False))
+    
+    counter.pprint()
+    sorted_stats.pprint()
 
 
     run_stream(kvs.context())
