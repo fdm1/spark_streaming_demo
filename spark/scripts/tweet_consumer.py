@@ -82,11 +82,23 @@ if __name__ == "__main__":
     words = processed.map(get_word_lists)
 
     
-    flat_with_polarity = words.flatMap(lambda x: ([(w, x['polarity']) for w in x['words']]))
-    windowed = flat_with_polarity.window(15*60,30)
+    flat_with_polarity = words.flatMap(lambda x: ([(w, x['polarity']) for w in set(x['words'])]))
+    windowed = flat_with_polarity.window(15*60,10)
     grouped_flat = windowed.groupByKey()
-    averaged_flat = grouped_flat.map(lambda x: (x[0], len(x[1]), sum(x[1])/len(x[1])))
-    averaged_flat.transform(lambda rdd: rdd.sortBy(lambda x: x[1], False)).pprint()
+
+    def get_record_stats(record):
+        from statistics import mean, stdev, variance
+        word = record[0]
+        count = len(record[1])
+        _mean = mean(record[1])
+        _stdev, _variance = None, None
+        if count > 1:
+            _stdev = stdev(record[1])
+            _variance = variance(record[1])
+        return {"word": word, "stats": { 'count': count, 'mean': _mean, 'stdev': _stdev, 'variance': _variance}}
+
+    averaged_flat = grouped_flat.map(get_record_stats)
+    averaged_flat.transform(lambda rdd: rdd.sortBy(lambda x: x['stats']['count'], ascending=False)).pprint()
 
 
     run_stream(kvs.context())
