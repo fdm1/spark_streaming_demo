@@ -1,12 +1,15 @@
 ## Spark/Kafka/Twitter Stream playground
 
-### Installation:
-  - `run bin/spark_setup`
+### Requirements:
+  - You need docker and docker-compose installed and running
   - [Create a Twitter app](https://apps.twitter.com/) and get some twitter creds. 
-    Then copy the `twitter.env.tmpl` to `twitter.env`, and fill in creds
+
+### Installation:
+  - `run bin/spark_setup` - This ensures you have a clone of the [gettyimages/docker-spark](https://github.com/gettyimages/docker-spark) repo in, as docker-compose needs some stuff from here.
+  - Copy the `twitter.env.tmpl` to `twitter.env`, and fill in your twitter creds
 
 ### Running things:
-  - `bin/kafka-print-tweets` will stream Trump-related tweets (sent from python to kafka)
+  - `bin/kafka-print-tweets` will stream Trump-related tweets (sent from python to kafka). Note that this sends the full [Tweet object](https://dev.twitter.com/overview/api/tweets), so this will be noisy.
   - `bin/spark-twitter-stream` will spin up the cluster and run `spark/scripts/tweet_consumer.py`
 
 ### Notes:
