@@ -1,11 +1,25 @@
 FROM gettyimages/spark:2.1.0-hadoop-2.7
 MAINTAINER https://github.com/fdm1
 
-COPY spark /spark
-RUN ln -s /spark/scripts $SPARK_HOME/scripts 
-RUN cp /spark/jars/*.jar $SPARK_HOME/jars
-RUN pip install -r /spark/requirements.txt
 
+ENV LD_LIBRARY_PATH $HADOOP_HOME/lib/native:$LD_LIBRARY_PATH
+
+# # Install sbt for scala files
+RUN apt-get update && \
+    apt-get install -y apt-transport-https && \
+    echo "deb https://dl.bintray.com/sbt/debian /" | tee -a /etc/apt/sources.list.d/sbt.list && \
+    apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 642AC823 && \
+    apt-get update && \
+    apt-get install -y sbt
+
+# Install python stuff
+COPY spark/scripts/python/requirements.txt /spark/scripts/python/requirements.txt
+RUN pip install -r /spark/scripts/python/requirements.txt
 # install nltk text mining requirement
 RUN python -m textblob.download_corpora && \
     python -m nltk.downloader stopwords
+
+# Copy/link project files
+COPY spark /spark
+RUN ln -s /spark/scripts $SPARK_HOME/scripts
+RUN cp /spark/jars/*.jar $SPARK_HOME/jars

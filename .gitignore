@@ -40,5 +40,6 @@ core
 # Maven
 log/
 target/
+project/
 
 dependency-reduced-pom.xml
