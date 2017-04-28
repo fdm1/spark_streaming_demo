@@ -37,9 +37,8 @@ core
 # Mac
 .DS_Store
 
-# Maven
+# Maven/sbt
 log/
 target/
-project/
 
 dependency-reduced-pom.xml
