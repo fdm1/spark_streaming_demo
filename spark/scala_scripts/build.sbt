@@ -1,5 +1,5 @@
 lazy val commonSettings = Seq(
-	name := "SparkStreaming1",
+	name := "SparkStreaming",
 	scalaVersion := "2.11.8",
   version := "0.1",
   organization := "com.frankmassi"

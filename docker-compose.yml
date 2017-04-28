@@ -60,9 +60,11 @@ services:
       - 7077:7077
       - 8080:8080
     volumes:
-      - ./docker-spark/conf/master:/conf
-      - ./docker-spark/data:/tmp/data
+      - ./spark-conf/master.conf:/conf/spark-defaults.conf
+      - ./spark-data/data:/tmp/data
       - ./spark:/spark
+      - ./.sbt:/root/.sbt
+      - ./.ivy2:/root/.ivy2
     # links:
     #   - kafka
 
@@ -95,6 +97,6 @@ services:
   #   ports:
   #     - 8081
   #   volumes:
-  #     - ./docker-spark/conf/worker:/conf
-  #     - ./docker-spark/data:/tmp/data
+  #     - ./spark-conf/worker.conf:/conf/spark-defaults.conf
+  #     - ./spark-data/data:/tmp/data
   #     - ./spark:/spark

@@ -3,20 +3,22 @@
 docker-compose up -d
 
 # scale up workers
-re='^[0-9]+$'
-workers=$1
-if [  $workers ] ; then
-  if ! [[ $workers =~ $re ]] ; then
-     echo "error: Not a number" >&2; exit 1
-   fi
- else
-   workers=1
-fi
-docker-compose scale worker=$workers
-
-script=scripts/tweet_consumer.py
-
-docker-compose exec master bash spark-submit --py-files $script $script
+# re='^[0-9]+$'
+# workers=$1
+# if [  $workers ] ; then
+#   if ! [[ $workers =~ $re ]] ; then
+#      echo "error: Not a number" >&2; exit 1
+#    fi
+#  else
+#    workers=1
+# fi
+# docker-compose scale worker=$workers
+#
+# script=scripts/tweet_consumer.py
+#
+docker-compose exec master bash -c "cd scala_scripts && \
+  spark-submit --class com.frankmassi.twitter_analyzer.Collect --master local[4] compiled_jars/SparkStreaming1-assembly-0.1.jar"
+# spark-submit --py-files $script $script
 docker-compose down
 
 # vi: ft=sh
