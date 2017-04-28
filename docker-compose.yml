@@ -90,3 +90,4 @@ services:
     volumes:
       - ./docker-spark/conf/worker:/conf
       - ./docker-spark/data:/tmp/data
+      - ./spark:/spark
