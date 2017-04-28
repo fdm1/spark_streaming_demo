@@ -1,6 +1,7 @@
 #!/bin/sh
 
-if [[ $1 != "no-compile" ]]; then
+
+if [ $1 = "--compile" ]; then
   sbt assembly
 fi
 

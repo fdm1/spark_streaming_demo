@@ -15,7 +15,8 @@ lazy val projectDependencies = Seq(
     "org.apache.spark" %% "spark-tags" % "2.1.0" % "provided",
 
     "org.apache.spark" %% "spark-streaming-twitter" % "1.6.3",
-    "com.google.code.gson" % "gson" % "2.8.0"
+    "com.google.code.gson" % "gson" % "2.8.0",
+    "org.twitter4j" % "twitter4j-core" % "4.0.4"
 
     )
 )
