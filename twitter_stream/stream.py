@@ -86,6 +86,7 @@ class MyStreamListener(tweepy.StreamListener):
 if __name__ == '__main__':
     topics = sys.argv[1:]
     if not topics:
-        topics = [t.strip() for t in os.environ.get('TWEET_TOPICS').split(',')]
+        topics = [t.strip() for t in os.environ.get('tweet_topics').split(',')]
+    print(topics)
     MyStreamListener(tweet_topics=topics)
 

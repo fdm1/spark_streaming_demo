@@ -8,8 +8,8 @@
 
   - `run bin/spark_setup` - This ensures you have the [gettyimages/docker-spark](https://github.com/gettyimages/docker-spark) 
     repo cloned locally, as docker-compose needs some stuff from here.
-  - Copy the `twitter.creds.env.tmpl` to `twitter.creds.env`, and fill in your twitter creds
-  - Set the topic(s) you want to follow in the `docker-compose.yml` `twitter_stream` service (`TWEET_TOPICS` environment variable)
+  - Copy the `twitter.env.tmpl` to `twitter.env`, and fill in your twitter creds
+  - Also set the topic(s) you want to follow in the `twitter.env`
 
 ### Running things:
 

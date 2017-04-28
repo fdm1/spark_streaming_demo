@@ -26,13 +26,11 @@ services:
     restart: always
     environment:
       KAFKA_CONNECT: kafka:9092
-      # comma-separated string of tweet_filters
-      TWEET_TOPICS: "trump"
     volumes:
       - ./twitter_stream:/twitter_stream
     links:
       - kafka
-    env_file: ./twitter.creds.env
+    env_file: ./twitter.env
 
   master:
     build:
