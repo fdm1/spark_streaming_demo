@@ -1,4 +1,6 @@
-package com.sundogsoftware.sparkstreaming
+
+
+package com.frankmassi.sparkstreaming
 
 import org.apache.spark._
 import org.apache.spark.SparkContext._
@@ -24,14 +26,15 @@ object PrintTweets {
     // Get rid of log spam (should be called after the context is set up)
     setupLogging()
 
+    val filters=Array("Trump", "DeVos")
     // Create a DStream from Twitter using our streaming context
-    val tweets = TwitterUtils.createStream(ssc, None)
+    val tweets = TwitterUtils.createStream(ssc, None, filters)
     
     // Now extract the text of each status update into RDD's using map()
-    val statuses = tweets.map(status => status.getText())
+    val statuses = tweets.map(status => status.getUser().getScreenName() + ": " + status.getText())
     
     // Print out the first ten
-    statuses.print()
+    statuses.print(20)
     
     // Kick it all off
     ssc.start()

@@ -17,7 +17,9 @@ project/plugins/project/
 .scala_dependencies
 .worksheet
 
+#other repos
 docker-spark/
+datasets/
 
 *.creds
 
@@ -25,6 +27,7 @@ docker-spark/
 .idea/
 *.iml
 *.iws
+core
 
 # Mac
 .DS_Store
@@ -33,3 +36,4 @@ docker-spark/
 log/
 target/
 
+dependency-reduced-pom.xml
