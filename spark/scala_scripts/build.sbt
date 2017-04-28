@@ -33,7 +33,7 @@ lazy val assemblySettings = Seq(
 		target in assembly := baseDirectory.value / "compiled_jars"
 )
 
-lazy val root = (project in file(".")).
+lazy val twitter_analyzer = (project in file(".")).
 	settings(commonSettings: _*).
 	settings(projectDependencies: _*).
 	settings(assemblySettings: _*)
