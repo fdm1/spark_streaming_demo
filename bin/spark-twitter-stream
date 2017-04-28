@@ -10,7 +10,7 @@ if [  $workers ] ; then
      echo "error: Not a number" >&2; exit 1
    fi
  else
-   workers=3
+   workers=1
 fi
 docker-compose scale worker=$workers
 

@@ -95,7 +95,8 @@ if __name__ == "__main__":
     words = processed.map(get_word_lists)
 
     
-    windowed = words.window(15*60,10)
+    # windowed = words.window(15*60,10)
+    windowed = words.window(15*60,60)
     counter = windowed.map(lambda x: (1, x['uuid'])).groupByKey().map(lambda x: len(x[1]))
 
     flat_with_polarity = windowed.flatMap(lambda x: ([(w, x['polarity']) for w in set(x['words'])]))
