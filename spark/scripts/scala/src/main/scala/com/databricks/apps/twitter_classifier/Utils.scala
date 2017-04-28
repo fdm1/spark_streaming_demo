@@ -25,10 +25,18 @@ object Utils {
     options
   }
 
+  def setTwitterEnvProperties = {
+    System.setProperty("twitter4j.oauth.consumerKey", sys.env("consumer_token"))
+    System.setProperty("twitter4j.oauth.consumerSecret", sys.env("consumer_secret"))
+    System.setProperty("twitter4j.oauth.accessToken", sys.env("access_token"))
+    System.setProperty("twitter4j.oauth.accessTokenSecret", sys.env("access_token_secret"))
+  }
+
   def parseCommandLineWithTwitterCredentials(args: Array[String]) = {
     val parser = new PosixParser
     try {
       val cl = parser.parse(THE_OPTIONS, args)
+
       System.setProperty("twitter4j.oauth.consumerKey", cl.getOptionValue(CONSUMER_KEY))
       System.setProperty("twitter4j.oauth.consumerSecret", cl.getOptionValue(CONSUMER_SECRET))
       System.setProperty("twitter4j.oauth.accessToken", cl.getOptionValue(ACCESS_TOKEN))
@@ -42,6 +50,7 @@ object Utils {
   }
 
   def getAuth = {
+    setTwitterEnvProperties
     Some(new OAuthAuthorization(new ConfigurationBuilder().build()))
   }
 
@@ -66,3 +75,4 @@ object Utils {
     }
   }
 }
+

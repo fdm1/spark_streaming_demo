@@ -4,7 +4,7 @@ package com.databricks.apps.twitter_classifier
 import java.io.File
 
 import com.google.gson.Gson
-import org.apache.spark.streaming.twitter.TwitterUtils
+import org.apache.spark.streaming.twitter._
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 import org.apache.spark.{SparkConf, SparkContext}
 
@@ -26,11 +26,11 @@ object Collect {
     val Array(outputDirectory, Utils.IntParam(numTweetsToCollect),  Utils.IntParam(intervalSecs), Utils.IntParam(partitionsEachInterval)) =
       Utils.parseCommandLineWithTwitterCredentials(args)
     val outputDir = new File(outputDirectory.toString)
-    if (outputDir.exists()) {
-      System.err.println("ERROR - %s already exists: delete or specify another directory".format(
-        outputDirectory))
-      System.exit(1)
-    }
+    // if (outputDir.exists()) {
+    //   System.err.println("ERROR - %s already exists: delete or specify another directory".format(
+    //     outputDirectory))
+    //   System.exit(1)
+    // }
     outputDir.mkdirs()
 
     println("Initializing Streaming Spark Context...")
@@ -38,14 +38,15 @@ object Collect {
     val sc = new SparkContext(conf)
     val ssc = new StreamingContext(sc, Seconds(intervalSecs))
 
-    val tweetStream = TwitterUtils.createStream(ssc, Utils.getAuth)
-      .map(gson.toJson(_))
-      
+    val tweetStream = TwitterUtils.createStream(ssc, Some(Utils.getAuth)).map(gson.toJson(_))
+
     tweetStream.foreachRDD((rdd, time) => {
       val count = rdd.count()
       if (count > 0) {
         val outputRDD = rdd.repartition(partitionsEachInterval)
-        outputRDD.saveAsTextFile(outputDirectory + "/tweets_" + time.milliseconds.toString)
+        // outputRDD.saveAsTextFile(outputDirectory + "/tweets_" + time.milliseconds.toString)
+        outputRDD.take(10).foreach(println)
+        println(count)
         numTweetsCollected += count
         if (numTweetsCollected > numTweetsToCollect) {
           System.exit(0)
