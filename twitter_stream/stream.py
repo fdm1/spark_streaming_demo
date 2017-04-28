@@ -32,6 +32,7 @@ class MyStreamListener(tweepy.StreamListener):
         self.producer = None
         while not self.producer:
              self.initialize_kafka_producer()
+        self.run_stream()
 
     def initialize_kafka_producer(self):
         self.logger.warn('Attempting to initialize Kafka Producer')
@@ -51,7 +52,7 @@ class MyStreamListener(tweepy.StreamListener):
         return tweepy.API(auth)
 
     def on_data(self, data):
-        print("data: {}".format(data))
+        # print("data: {}".format(data))
         text = json.loads(data).get(u'text')
         # self.logger.warn(data)
         if text:
@@ -72,16 +73,14 @@ class MyStreamListener(tweepy.StreamListener):
     def on_limit(self, track):
         self.logger.warn('Stream is being limited: {}'.format(track))
 
-    def on_exception(self, execption):
+    def on_exception(self, exception):
         self.logger.warn('Stream raised exception: {}'.format(exception))
 
-def run_stream(stream_args):
-    # myStreamListener = MyStreamListener()
-    stream = MyStreamListener(stream_args)
-    stream.logger.warn('Initializing stream')
-    myStream = tweepy.Stream(auth = stream.api.auth, listener=stream)
-    myStream.filter(**stream.filters)
+    def run_stream(self):
+        self.logger.warn('Initializing stream')
+        stream = tweepy.Stream(auth = self.api.auth, listener=self)
+        stream.filter(**self.filters)
 
 if __name__ == '__main__':
-    run_stream(sys.argv[1:])
+    MyStreamListener(sys.argv[1:])
 

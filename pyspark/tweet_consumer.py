@@ -1,6 +1,3 @@
-# THIS DOES NOT WORK YET!
-
-
 from __future__ import print_function
 
 import sys
@@ -16,11 +13,11 @@ kafka = 'kafka:9092'
 topic = 'tweets'
 
 def create_rdd(sc, host=kafka, topic=topic, partition=0, min_offset=0, max_offset=1):
-    os = OffsetRange(topic, partition, min_offset, max_offset)
-    return KafkaUtils.createRDD(sc, {'metadata.broker.list': host}, [os])
+    offset = OffsetRange(topic, partition, min_offset, max_offset)
+    return KafkaUtils.createRDD(sc, {'metadata.broker.list': host}, [offset])
 
 def get_stream(sc, host=kafka):
-    ssc = StreamingContext(sc, 1)
+    ssc = StreamingContext(sc, 5)
     kvs = KafkaUtils.createDirectStream(ssc, [topic], {'metadata.broker.list': host})
     return ssc, kvs
 
@@ -41,7 +38,7 @@ if __name__ == "__main__":
     # kvs.saveAsTextFiles(os.path.expanduser('~') + '/tweets', suffix='txt')
 
     lines = kvs.map(lambda x: x[1])
-    lines.pprint() 
+    lines.pprint()
     counts = lines.flatMap(lambda line: line.split(" ")) \
                     .map(lambda word: (word, 1)) \
                             .reduceByKey(lambda a, b: a+b)

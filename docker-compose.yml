@@ -7,6 +7,7 @@ services:
 
   kafka:
     image: wurstmeister/kafka
+    restart: always
     expose:
       - 9092
     ports:
