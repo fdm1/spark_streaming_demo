@@ -25,39 +25,54 @@ object Collect {
 
     // val tweetStream = TwitterUtils.createStream(ssc, Utils.getAuth).map(gson.toJson(_))
     val tweetStream = TwitterUtils.createStream(ssc, Utils.getAuth, filter_words)
+    val rawStatusText = tweetStream.map(status => status.getText())
+    rawStatusText.print
 
-    val statuses = tweetStream.map(status => status.getText())
-    statuses.print
-
-    // clean text (remove dupe spaces, RT, urls, mentions, non-alphanumeric, then lowercase)
-    val dedupedSpaces = statuses.map(status => " +".r.replaceAllIn(status, " "))
+    // clean text (remove dupe spaces, RT, urls, mentions, non-alphanumeric, then lowercase), flatmap to words
     val cleaner_regex = "(^rt |(^| )@\\S*|http\\S*|[^a-z0-9 #])".r
-    val cleanedStatuses = dedupedSpaces.map(status => cleaner_regex.replaceAllIn(status.toLowerCase, "").trim)
+    val cleanedStatuses = rawStatusText.map(status => cleaner_regex.replaceAllIn(status.toLowerCase, "").trim)
+    val tweetWords = cleanedStatuses.flatMap(tweetText => tweetText.split(" ").toSet)
+                                    .map(word => word.trim)
+                                    .filter(word => word.length > 1)
     
     // get top words
-    val tweetWords = cleanedStatuses.flatMap(tweetText => tweetText.split(" ").toSet)
-    val words = tweetWords.map(word => !word.startsWith("#"))
-    val wordKeyValues = tweetWords.map(word => (word, 1))
-    val wordCounts = wordKeyValues.reduceByKeyAndWindow( (x,y) => x + y, (x,y) => x - y, Seconds(300), Seconds(5))
-    val sortedWordResults = wordCounts.transform(rdd => rdd.sortBy(x => x._2, false))
-    sortedWordResults.print
+    val topWordCounts = tweetWords.filter(word => !word.startsWith("#"))
+                                  .map(word => (word, 1))
+                                  .reduceByKeyAndWindow( (x,y) => x + y, (x,y) => x - y, Seconds(300), Seconds(5))
+                                  .transform(rdd => rdd.sortBy(x => x._2, false))
+    topWordCounts.print
 
     // get top hashtags
+    val topHashtagCounts = tweetWords.filter(word => word.startsWith("#"))
+                                  .map(word => (word, 1))
+                                  .reduceByKeyAndWindow( (x,y) => x + y, (x,y) => x - y, Seconds(300), Seconds(5))
+                                  .transform(rdd => rdd.sortBy(x => x._2, false))
+    topHashtagCounts.print
+
+    // OLD WORDS
+    // val words = tweetWords.filter(word => !word.startsWith("#"))
+    // val wordKeyValues = words.map(word => (word, 1))
+    // val wordCounts = wordKeyValues.reduceByKeyAndWindow( (x,y) => x + y, (x,y) => x - y, Seconds(300), Seconds(5))
+    // val sortedWordResults = wordCounts.transform(rdd => rdd.sortBy(x => x._2, false))
+    // sortedWordResults.print
+
+    // OLD HASHTAG
+    // get top hashtags
     // Now eliminate anything that's not a hashtag
-    val hashtags = tweetWords.filter(word => word.startsWith("#"))
-    // Map each hashtag to a key/value pair of (hashtag, 1) so we can count them up by adding up the values
-    val hashtagKeyValues = hashtags.map(hashtag => (hashtag, 1))
-    // Now count them up over a 5 minute window sliding every one second
-    val hashtagCounts = hashtagKeyValues.reduceByKeyAndWindow( (x,y) => x + y, (x,y) => x - y, Seconds(300), Seconds(5))
-    //  You will often see this written in the following shorthand:
-    //val hashtagCounts = hashtagKeyValues.reduceByKeyAndWindow( _ + _, _ -_, Seconds(300), Seconds(1))
-    // Sort the results by the count values
-    val sortedHashResults = hashtagCounts.transform(rdd => rdd.sortBy(x => x._2, false))
-    // Print the top 10
-    sortedHashResults.print
+    // val hashtags = tweetWords.filter(word => word.startsWith("#"))
+    // // Map each hashtag to a key/value pair of (hashtag, 1) so we can count them up by adding up the values
+    // val hashtagKeyValues = hashtags.map(hashtag => (hashtag, 1))
+    // // Now count them up over a 5 minute window sliding every one second
+    // val hashtagCounts = hashtagKeyValues.reduceByKeyAndWindow( (x,y) => x + y, (x,y) => x - y, Seconds(300), Seconds(5))
+    // //  You will often see this written in the following shorthand:
+    // //val hashtagCounts = hashtagKeyValues.reduceByKeyAndWindow( _ + _, _ -_, Seconds(300), Seconds(1))
+    // // Sort the results by the count values
+    // val sortedHashResults = hashtagCounts.transform(rdd => rdd.sortBy(x => x._2, false))
+    // // Print the top 10
+    // sortedHashResults.print
 
 		// Stop after X tweets
-    statuses.foreachRDD((rdd, time) => {
+    rawStatusText.foreachRDD((rdd, time) => {
       val count = rdd.count()
       if (count > 0) {
         // println(count)
