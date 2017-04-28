@@ -55,10 +55,10 @@ class MyStreamListener(tweepy.StreamListener):
         return tweepy.API(auth)
 
     def on_data(self, data):
-        text = json.loads(data).get(u'text')
-        if text:
+        payload = json.loads(data)
+        if payload.get('text'):
             if self.use_kafka:
-                self.producer.send('tweets', text)
+                self.producer.send('tweets', payload)
                 self.producer.flush()
             else:
                 self.logger.warn(payload)
