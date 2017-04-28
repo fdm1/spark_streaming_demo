@@ -14,7 +14,7 @@
 ### Running things:
 
   - `bin/kafka-print-tweets` will stream Trump-related tweets (sent from python to kafka).
-  - `bin/spark-twitter-stream [number_of_workers (default=1)]` will spin up the cluster and run `spark/scripts/tweet_consumer.py`
+  - `bin/spark-twitter-stream [number_of_workers (default=3)]` will spin up the cluster and run `spark/scripts/tweet_consumer.py`
 
 ### Performance tuning
 

@@ -9,8 +9,10 @@ if [  $workers ] ; then
   if ! [[ $workers =~ $re ]] ; then
      echo "error: Not a number" >&2; exit 1
    fi
-  docker-compose scale worker=$workers
+ else
+   workers=3
 fi
+docker-compose scale worker=$workers
 
 script=scripts/tweet_consumer.py
 
