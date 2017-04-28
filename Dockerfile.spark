@@ -10,7 +10,8 @@ RUN apt-get update && \
     echo "deb https://dl.bintray.com/sbt/debian /" | tee -a /etc/apt/sources.list.d/sbt.list && \
     apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 642AC823 && \
     apt-get update && \
-    apt-get install -y sbt
+    apt-get install -y sbt && \
+    sbt about
 
 # Install python stuff
 COPY spark/scripts/python/requirements.txt /spark/scripts/python/requirements.txt
