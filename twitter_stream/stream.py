@@ -57,8 +57,11 @@ class MyStreamListener(tweepy.StreamListener):
     def on_data(self, data):
         payload = json.loads(data)
         if payload.get('text'):
+            text = payload.get('text')
+            if payload.get('retweeted_status') and payload['retweeted_status'].get('text'):
+                text = payload['retweeted_status']['text']
             if self.use_kafka:
-                self.producer.send('tweets', {'text': payload['text']})
+                self.producer.send('tweets', {'text': text})
                 self.producer.flush()
             else:
                 self.logger.warn(payload)
