@@ -42,7 +42,9 @@ services:
       CONF_DIR: /conf
       MASTER: spark://master:7077
       PUBLIC_DNS: localhost
-    env_file: ./spark.env
+    env_file:
+      - ./spark.env
+      - ./twitter.env
     expose:
       - 7001
       - 7002
@@ -64,33 +66,35 @@ services:
     # links:
     #   - kafka
 
-  worker:
-    build:
-      context: .
-      dockerfile: Dockerfile.spark
-    command: bin/spark-class org.apache.spark.deploy.worker.Worker spark://master:7077
-    hostname: worker
-    environment:
-      CONF_DIR: /conf
-      WORKER_CORES: 2
-      WORKER_MEMORY: 1g
-      WORKER_PORT: 8881
-      WORKER_WEBUI_PORT: 8081
-      PUBLIC_DNS: localhost
-    env_file: ./spark.env
-    links:
-      - master
-      # - kafka
-    expose:
-      - 7012
-      - 7013
-      - 7014
-      - 7015
-      - 7016
-      - 8881
-    ports:
-      - 8081
-    volumes:
-      - ./docker-spark/conf/worker:/conf
-      - ./docker-spark/data:/tmp/data
-      - ./spark:/spark
+  # worker:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.spark
+  #   command: bin/spark-class org.apache.spark.deploy.worker.Worker spark://master:7077
+  #   hostname: worker
+  #   environment:
+  #     CONF_DIR: /conf
+  #     WORKER_CORES: 2
+  #     WORKER_MEMORY: 1g
+  #     WORKER_PORT: 8881
+  #     WORKER_WEBUI_PORT: 8081
+  #     PUBLIC_DNS: localhost
+  #   env_file:
+  #     - ./spark.env
+  #     - ./twitter.env
+  #   links:
+  #     - master
+  #     # - kafka
+  #   expose:
+  #     - 7012
+  #     - 7013
+  #     - 7014
+  #     - 7015
+  #     - 7016
+  #     - 8881
+  #   ports:
+  #     - 8081
+  #   volumes:
+  #     - ./docker-spark/conf/worker:/conf
+  #     - ./docker-spark/data:/tmp/data
+  #     - ./spark:/spark

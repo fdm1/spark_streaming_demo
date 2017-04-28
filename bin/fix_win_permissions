@@ -1,0 +1,6 @@
+#!/bin/bash
+echo "making bin files executable"
+chmod a+x $(find .  | grep /bin/ )
+
+echo "making non-bin files not executable"
+chmod a-x $(find . -perm -a+x | grep / | grep -v /bin  | grep -v /.git | grep -e '^\.\/.*\.')

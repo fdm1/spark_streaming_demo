@@ -14,13 +14,13 @@ RUN apt-get update && \
     sbt about
 
 # Install python stuff
-COPY spark/scripts/python/requirements.txt /spark/scripts/python/requirements.txt
-RUN pip install -r /spark/scripts/python/requirements.txt
+COPY spark/python_scripts/requirements.txt /spark/python_scripts/requirements.txt
+RUN pip install -r /spark/python_scripts/requirements.txt
 # install nltk text mining requirement
 RUN python -m textblob.download_corpora && \
     python -m nltk.downloader stopwords
 
 # Copy/link project files
 COPY spark /spark
-RUN ln -s /spark/scripts $SPARK_HOME/scripts
-RUN cp /spark/jars/*.jar $SPARK_HOME/jars
+RUN ln -s /spark/python_scripts $SPARK_HOME/python_scripts
+RUN ln -s /spark/scala_scripts $SPARK_HOME/scala_scripts
