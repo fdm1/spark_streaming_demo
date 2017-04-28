@@ -17,7 +17,8 @@ from textblob import TextBlob
 KAFKA_CONNECT = 'kafka:9092'
 KAFKA_TOPIC = 'tweets'
 WINDOW_MINUTES = int(os.environ.get('streaming_window_minutes', 5))
-WINDOW_SLIDING_SECONDS = int(os.environ.get('streaming_window_slide_seconds', 30))
+SLIDE_SECONDS = int(os.environ.get('streaming_window_slide_seconds', 30))
+WINDOW_PARAMS = [WINDOW_MINUTES*60,SLIDE_SECONDS]
 
 
 def create_rdd(sc, partition=0, min_offset=0, max_offset=1):
@@ -94,20 +95,24 @@ if __name__ == "__main__":
     processed = kvs.map(extract_text_and_hashses)
     words = processed.map(get_word_lists)
 
-    
     # windowed = words.window(15*60,10)
-    windowed = words.window(15*60,60)
-    counter = windowed.map(lambda x: (1, x['uuid'])).groupByKey().map(lambda x: len(x[1]))
+    windowed = words.window(*WINDOW_PARAMS)
+    # counter = windowed.map(lambda x: (1, x['uuid'])).groupByKey().map(lambda x: len(x[1]))
 
     flat_with_polarity = windowed.flatMap(lambda x: ([(w, x['polarity']) for w in set(x['words'])]))
 
     grouped_flat = flat_with_polarity.groupByKey()
 
     stats = grouped_flat.map(get_record_stats)
+    stats = grouped_flat.map(get_record_stats)
     sorted_stats = stats.transform(lambda rdd: rdd.sortBy(lambda x: x['stats']['count'], ascending=False))
-    
-    counter.pprint()
+
+    # counter.pprint()
     sorted_stats.pprint()
 
+    counts = kvs.window(*WINDOW_PARAMS)
+    # counter = counts.transform(lambda x: 1)
+    counts.foreachRDD(lambda x: print("Count: {}".format(x.count())))
+    # print("Count: {}".format(rdd.count())))
 
     run_stream(kvs.context())
