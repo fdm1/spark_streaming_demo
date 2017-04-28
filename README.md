@@ -55,6 +55,8 @@ and looking for the streaming processing time to level off while your system usa
 
 ![Leveled-off stream processing](images/streaming_performance.png)
 
+![Streaming output](images/streaming_output.png)
+
 ### Notes:
 - If your twitter stream is returning 401 errors (and your creds are correct), 
   you may need to restart your docker engine. At least on OSX, the container's system time can drift 
