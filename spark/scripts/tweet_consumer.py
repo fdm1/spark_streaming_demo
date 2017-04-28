@@ -3,6 +3,7 @@ from __future__ import print_function
 import json
 import logging
 import os
+import re
 import sys
 from pyspark import SparkContext
 from pyspark.streaming import StreamingContext
@@ -34,17 +35,21 @@ def get_stream(sc, host=kafka, batch_interval=1):
     return kvs
 
 
-def get_polarity(record):
-    """Return the polarity of each tweet"""
-    return TextBlob(record).sentiment.polarity
-
-
-def print_rdd(rdd):
+def extract_text(record):
     """Print the tweet count and basic stats about polarity of the tweets"""
-    datamap = rdd.map(lambda x: json.loads(x[1]))
-    print("\n\n{} Tweets\n__________\n".format(datamap.count()))
-    polarity = datamap.map(get_polarity)
-    print("Polarity:\nmin: {}, mean: {}, max: {}\n__________\n".format(polarity.min(), polarity.mean(), polarity.max()))
+    return json.loads(record[1])['text']
+
+
+def clean_text(text):
+    text = re.sub(r'^RT ', '', text)  # remove RT at beginning of text
+    text = re.sub(r'@\S*', '', text)  #remove mentions
+    text = re.sub(r'#\S*', '', text)  #remove hashtags
+    text = re.sub(r'http\S*', '', text)  # remove links
+    return text
+
+
+def extract_noun_phrases(cleaned_text):
+    return TextBlob(cleaned_text).noun_phrases  # return noun_phrases for each cleaned tweet
 
 
 def run_stream(ssc):
@@ -59,6 +64,15 @@ if __name__ == "__main__":
     sc = SparkContext(master='spark://master:7077', appName="TwitterStreamConsumer")
     sc.setLogLevel('ERROR')
     kvs = get_stream(sc)
-    kvs.pprint()  # print 10 tweets at a time as they come in.
-    kvs.window(10,5).foreachRDD(print_rdd)  # In 10 second batches (rolling every 5 seconds), print stats
+
+    # window_stream = kvs.window(60,10)
+
+    text_stream = kvs.map(extract_text)
+    cleaned_stream = text_stream.map(clean_text)
+    noun_phrases = cleaned_stream.map(extract_noun_phrases)
+
+    # text_stream.pprint()
+    # cleaned_stream.pprint()
+    noun_phrases.window(60,10).pprint()
+
     run_stream(kvs.context())
