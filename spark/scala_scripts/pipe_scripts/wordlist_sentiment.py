@@ -18,12 +18,13 @@ for line in sys.stdin:
         filtered_text = " ".join(w for w in cleaned_text.split(" ")
                                   if (w not in all_stopwords
                                       and not w.startswith("#")))
-        hashtags = [w for w in raw_text.split(" ") if w.startswith("#")]
+        hashtags = list(set([w for w in raw_text.split(" ") if w.startswith("#")]))
 
+        words = list(set([w for w in [w.strip() for w in filtered_text.split(" ")] if len(w) > 2]))
         payload = {"raw_text": raw_text,
                    "polarity": TextBlob(filtered_text).polarity,
-                   "filtered_words": list(set(filtered_text.split(" "))),
-                   "hashtags": list(set(hashtags))}
+                   "words": words,
+                   "hashtags": hashtags}
 
         print(json.dumps(payload))
 

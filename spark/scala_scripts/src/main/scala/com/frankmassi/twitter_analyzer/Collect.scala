@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import org.apache.spark.streaming.twitter.TwitterUtils
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.rdd.RDD
 import twitter4j.Status
 
 /**
@@ -13,7 +14,8 @@ import twitter4j.Status
 // val pipe_separator = "TWEETSPLITTER"
 
 object rddFunctions {
-    
+  private var tweetSeparatorString = "TWEETSPLITTER"
+
   def getRawTweetText(status: twitter4j.Status): String = {
     if (status.isRetweet) { status.getRetweetedStatus().getText() }
     else { status.getText() }
@@ -21,24 +23,27 @@ object rddFunctions {
 
   def getCleanedStatusText(text: String): String = {
     val cleaner_regex = "(^rt |(^| )@\\S*|http\\S*|[^a-z0-9 #])".r
-    text + "TWEETSPLITTER" + cleaner_regex.replaceAllIn(text.toLowerCase, "").trim
+    text + tweetSeparatorString + cleaner_regex.replaceAllIn(text.toLowerCase, "").trim
   }
+
+  def getPipedSentiment(rdd: RDD[String]): RDD[String] = {
+    rdd.pipe("python ./pipe_scripts/wordlist_sentiment.py " + tweetSeparatorString)
+  }
+  
 
 }
 
+case class TweetData(raw_text: String,
+                     words: Array[String],
+                     hashtags: Array[String],
+                     polarity: Float)
 
 object Collect {
-  private var numTweetsToCollect = 10000L
+  private var numTweetsToCollect = 1000L
   private var numTweetsCollected = 0L
   private var gson = new Gson()
   private var intervalSecs = 5
   private var filter_words = Array(sys.env("tweet_topics"))
-
-  case class TweetData(raw_text: String,
-                       filtered_words: Array[String],
-                       hashtags: Array[String],
-                       polarity: Float)
-
 
   def main(args: Array[String]) {
 
@@ -55,14 +60,27 @@ object Collect {
 
     val tweetWords = rawStatusText
                         .map(rddFunctions.getCleanedStatusText)
-                        .transform(rdd => rdd.pipe("python ./pipe_scripts/wordlist_sentiment.py " + "TWEETSPLITTER"))
+                        .transform(rddFunctions.getPipedSentiment(_))
                         .map(piped_json => gson.fromJson(piped_json, classOf[TweetData]))
                         //
                         // .flatMap(tweetText => tweetText.split(" ").toSet)
                         // .map(word => word.trim)
                         // .filter(word => word.length > 1)
     
-    tweetWords.window(Seconds(300), Seconds(5)).print
+    val fm = tweetWords.flatMap(td => {
+      for (x <- td.words; y <- td.hashtags; z <- List(td.polarity)) yield (x,y,z)
+    })
+
+    val top_words = fm.transform(rdd => {
+      rdd.zipWithUniqueId
+         .groupBy(r => r._1._1)
+         .map(r => (r._1, r._2.count(x => true)))
+         .sortBy(r => r._2, ascending=false)
+    })
+
+    
+    val win = top_words.window(Seconds(300), Seconds(5))
+    win.print
     // get top words
     // val topWordCounts = tweetWords
     //                       .filter(word => !word.startsWith("#"))
@@ -144,3 +162,31 @@ object Collect {
     ssc.awaitTermination()
   }
 }
+
+
+
+// object Scratch {
+//
+//   case class TweetData(raw_text: String,
+//                        words: Array[String],
+//                        hashtags: Array[String],
+//                        polarity: Double,
+//                        other_num: Double)
+//
+//   val t1 = TweetData("hi there", Array("hi", "there"), Array(), 0.3, 2)
+//   val t2 = TweetData("hi there #yo", Array("hi", "there"), Array("#yo"), 0.0, 1)
+//   val t3 = TweetData("hey #you", Array("hey"), Array("#you"), -0.3, 2)
+//   val t = List(t1, t2, t3)
+//   val tweets = sc.parallelize(t)
+//
+//   val fm = tweets.flatMap(td => {
+//     for (x <- td.words; y <- td.hashtags; z <- List(td.polarity)) yield (x,y,z)
+//   })
+//   
+//   val zipped = fm.zipWithUniqueId
+//   (zipped.groupBy(r => r._1._2)
+//         .map(r => (r._1, r._2.count(x => true)))
+//         .sortBy(r => r._2, ascending=false)
+//         .collect)
+//
+// }
