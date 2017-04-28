@@ -1,6 +1,0 @@
-#!/bin/bash
-docker-compose up -d
-docker-compose exec master bash /pyspark/submit.sh
-docker-compose down
-
-# vi: ft=sh

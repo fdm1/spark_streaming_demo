@@ -1,0 +1,7 @@
+FROM gettyimages/spark:2.1.0-hadoop-2.7
+MAINTAINER https://github.com/fdm1
+
+COPY spark /spark
+RUN ln -s /spark/scripts $SPARK_HOME/scripts 
+RUN cp /spark/jars/*.jar $SPARK_HOME/jars
+RUN pip install -r /spark/requirements.txt

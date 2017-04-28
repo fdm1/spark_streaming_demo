@@ -17,7 +17,7 @@ access_token_secret = os.environ['access_token_secret']
 #override tweepy.StreamListener to add logic to on_status
 class MyStreamListener(tweepy.StreamListener):
 
-    def __init__(self, filter_terms=None):
+    def __init__(self, filter_terms=None, kafka=True, run=True):
         self.logger = logging.getLogger(__file__)
         self.logger.setLevel(logging.WARN)
 
@@ -29,10 +29,13 @@ class MyStreamListener(tweepy.StreamListener):
             self.filters.update(locations=[-180,-90,180,90])
 
         self.api = self.get_auth_api()
-        self.producer = None
-        while not self.producer:
-             self.initialize_kafka_producer()
-        self.run_stream()
+        self.use_kafka=kafka
+        if self.use_kafka:
+            self.producer = None
+            while not self.producer:
+                 self.initialize_kafka_producer()
+        if run:
+            self.run_stream()
 
     def initialize_kafka_producer(self):
         self.logger.warn('Attempting to initialize Kafka Producer')
@@ -52,14 +55,13 @@ class MyStreamListener(tweepy.StreamListener):
         return tweepy.API(auth)
 
     def on_data(self, data):
-        # print("data: {}".format(data))
         text = json.loads(data).get(u'text')
-        # self.logger.warn(data)
         if text:
-            self.producer.send('tweets', text)
-            self.producer.flush()
-            # print(text)
-            # self.logger.warn(text)
+            if self.use_kafka:
+                self.producer.send('tweets', text)
+                self.producer.flush()
+            else:
+                self.logger.warn(payload)
 
     def on_error(self, status_code):
         self.logger.warn("TwitterStreamError: {}".format(status_code))

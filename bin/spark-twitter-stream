@@ -1,0 +1,6 @@
+#!/bin/bash
+docker-compose up -d
+docker-compose exec master bash spark-submit scripts/tweet_consumer.py
+docker-compose down
+
+# vi: ft=sh
