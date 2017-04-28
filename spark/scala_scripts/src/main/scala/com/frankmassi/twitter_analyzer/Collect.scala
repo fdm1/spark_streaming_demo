@@ -89,10 +89,68 @@ object Collect {
 
     val windowedRDD = tweetDataRDD.window(Seconds(900), Seconds(15))
     // windowedRDD.print
-    tweetDataRDD.map(r => (r.hashtag, 1))
-                .reduceByKeyAndWindow(_ + _, Seconds(900))
-                .map { case (topic, count) => (count, topic)}
-                .transform(_.sortByKey(false)).print
+    // tweetDataRDD.map(r => (r.hashtag, 1))
+    //             .reduceByKeyAndWindow(_ + _, Seconds(900))
+    //             .map { case (topic, count) => (count, topic)}
+    //             .transform(_.sortByKey(false)).print
+    //
+    val wordCounts = (windowedRDD.map(r => (r.word, 1))
+                                 .reduceByKey(_ + _))
+
+    val topWords = (wordCounts.map { case (topic, count) => (count, topic) }
+                              .transform(_.sortByKey(false))
+                              .map { case (topic, count) => (count, topic) })
+
+    val wordHashCounts = (windowedRDD.map(r => ((r.word, r.hashtag, r.is_retweet), 1))
+                                      .reduceByKey(_ + _)
+                                      .map(r => (r._1._1, (r._1._2, r._1._3, r._2))))
+
+    val topWordHashCounts = topWords.join(wordHashCounts)
+                                    .map(r => ((r._1, r._2._1), r._2._2))
+
+    case class TotalCount(
+      word: String,
+      total_count: Int
+    )
+
+    case class HashRetweetCount(
+      hashtag: String,
+      is_retweet: Boolean,
+      count: Int
+    )
+
+    val structuredCounts = (topWordHashCounts.map(r => ((r._1._1, r._1._2),
+                                                        (r._2._1, r._2._2 == "true", r._2._3))))
+
+
+    case class TopWordsByHashtag(
+      word: String,
+      totalCount: Int,
+      hashtags: Array[(String, Boolean, Int)]
+    )
+
+    val topWordsByHashAndRetweeet = structuredCounts.groupByKey
+                                                    .map(r => (r._1._1, r._1._2, r._2.toArray))
+                                                    .map(r => gson.toJson(r))
+                                                    .print
+    // gs.toJson(topWordsByHashAndRetweeet.collect)
+
+    rawStatusText.foreachRDD((rdd, time) => {
+      val count = rdd.count()
+      if (count > 0) {
+        numTweetsCollected += count
+        println(s"Total tweet counts: $numTweetsCollected (limit $numTweetsToCollect)")
+        if (numTweetsCollected > numTweetsToCollect) {
+          System.exit(0)
+        }
+      }
+    })
+
+		ssc.checkpoint("/tmp/checkpoint")
+    ssc.start()
+    ssc.awaitTermination()
+  }
+}
     // windowedRDD.map(r => gson.toJson(r)).print
     // windowedRDD.transform(r => {
     //   for (w <- r.words) {
@@ -118,73 +176,78 @@ object Collect {
       // spark.sqlContext.sql("select word, count(1) from tweets group by 1 order by 2 desc limit 10").show
     // }
 
-    rawStatusText.foreachRDD((rdd, time) => {
-      val count = rdd.count()
-      if (count > 0) {
-        numTweetsCollected += count
-        println(s"Total tweet counts: $numTweetsCollected (limit $numTweetsToCollect)")
-        if (numTweetsCollected > numTweetsToCollect) {
-          System.exit(0)
-        }
-      }
-    })
-
-		ssc.checkpoint("/tmp/checkpoint")
-    ssc.start()
-    ssc.awaitTermination()
-  }
-}
-
 
 //
 //
-import com.google.common.collect.ImmutableMap
-import com.google.gson.Gson
+// import com.google.common.collect.ImmutableMap
+// import com.google.gson.Gson
+//
+// val gson = new Gson()
+//
+// case class TweetData(uuid: String,
+//                      raw_text: String,
+//                      words: Array[String],
+//                      // polarity: Double,
+//                      hashtags: Array[String],
+//                      is_retweet: String
+//                     )
+//
+// val t1 = TweetData("a", "hi you", Array("hi", "you"), Array(""), "false")
+// val t2 = TweetData("b", "hi there #yo", Array("hi", "there"), Array("#yo", "#you"), "true")
+// val t3 = TweetData("c", "hey you #you", Array("hey", "you"), Array("#you"), "true")
+// val t4 = TweetData("d", "hi guy hey #you", Array("hi", "guy", "hey"), Array("#you"), "false")
+// val t = List(t1, t2, t3, t4)
+//
+//
+//
+// val tweets = sc.parallelize(t)
 
-val gson = new Gson()
-
-case class TweetData(uuid: String,
-                     raw_text: String,
-                     words: Array[String],
-                     // polarity: Double,
-                     hashtags: Array[String],
-                     is_retweet: String
-                    )
-
-val t1 = TweetData("a", "hi you", Array("hi", "you"), Array(""), "false")
-val t2 = TweetData("b", "hi there #yo", Array("hi", "there"), Array("#yo", "#you"), "true")
-val t3 = TweetData("c", "hey you #you", Array("hey", "you"), Array("#you"), "true")
-val t4 = TweetData("d", "hi guy hey #you", Array("hi", "guy", "hey"), Array("#you"), "false")
-val t = List(t1, t2, t3, t4)
-
-
-
-val tweets = sc.parallelize(t)
-
-case class TweetWordHash(
-  uuid: String,
-  word: String,
-  hashtag: String="",
-  is_retweet: String
-)
-
-val data = List(TweetWordHash("a", "hi", "#hi", "false"),
-                TweetWordHash("a", "there", "#hi", "false"),
-                TweetWordHash("b", "hi", "#hi", "false"),
-                TweetWordHash("b", "hi", "#ho", "false"),
-                TweetWordHash("c", "yo", "", "true"))
-val tweetDataRDD = sc.parallelize(data)
-
-val wordCounts = (tweetDataRDD.map(r => (r.word, 1))
-                             .reduceByKey(_ + _))
-
-val topWords = sc.parallelize(wordCounts.sortBy(_._2, false).take(2))
-
-val wordHashCounts = (tweetDataRDD.map(r => ((r.word, r.hashtag, r.is_retweet), 1))
-                                 .reduceByKey(_ + _)
-                                 .map(r => (r._1._1, (r._1._2, r._1._3, r._2))))
-wordHashCounts
-val topWordHashCounts = topWords.join(wordHashCounts).map(r => ((r._1, r._2._1), r._2._2))
+// case class TweetWordHash(
+//   uuid: String,
+//   word: String,
+//   hashtag: String="",
+//   is_retweet: String
+// )
+//
+// val data = List(TweetWordHash("a", "hi", "#hi", "false"),
+//                 TweetWordHash("a", "there", "#hi", "false"),
+//                 TweetWordHash("b", "hi", "#hi", "false"),
+//                 TweetWordHash("b", "hi", "#ho", "false"),
+//                 TweetWordHash("c", "yo", "", "true"))
+// val tweetDataRDD = sc.parallelize(data)
+//
+// val wordCounts = (tweetDataRDD.map(r => (r.word, 1))
+//                              .reduceByKey(_ + _))
+//
+// val topWords = sc.parallelize(wordCounts.sortBy(_._2, false).take(2))
+//
+// val wordHashCounts = (tweetDataRDD.map(r => ((r.word, r.hashtag, r.is_retweet), 1))
+//                                  .reduceByKey(_ + _)
+//                                  .map(r => (r._1._1, (r._1._2, r._1._3, r._2))))
+// wordHashCounts
+// val topWordHashCounts = topWords.join(wordHashCounts).map(r => ((r._1, r._2._1), r._2._2))
+//
+// case class TotalCount(
+//   word: String,
+//   total_count: Int
+// )
+//
+// case class HashRetweetCount(
+//   hashtag: String,
+//   is_retweet: Boolean,
+//   count: Int
+// )
+//
+// val structuredCounts = topWordHashCounts.map(r => (TotalCount(r._1._1, r._1._2), HashRetweetCount(r._2._1, r._2._2 == "true", r._2._3)))
+//
+//
+// case class TopWordsByHashtag(
+//   word: String,
+//   totalCount: Int,
+//   hashtags: Array[HashRetweetCount]
+// )
+// val topWordsByHashAndRetweeet = structuredCounts.groupByKey.map(r => TopWordsByHashtag(r._1.word, r._1.total_count, r._2.toArray))
+// gs.toJson(topWordsByHashAndRetweeet.collect)
 //
 // val df = (tweets.toDF
 //               .withColumn("words", explode($"words")).withColumnRenamed("words", "word")
