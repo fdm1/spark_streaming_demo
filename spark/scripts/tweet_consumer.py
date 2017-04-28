@@ -5,6 +5,8 @@ import logging
 import os
 import re
 import sys
+from nltk.corpus import stopwords
+from operator import add
 from pyspark import SparkContext
 from pyspark.streaming import StreamingContext
 from pyspark.streaming.kafka import KafkaUtils
@@ -59,20 +61,14 @@ def extract_text_and_hashses(record):
     hashes = [h.lower() for h in re.findall(r'#\S*', text)]
     text= clean_text(text)
     text_blob = TextBlob(text)
-    return {'hashtags': hashes, 'text': text}
-
-
-def get_polarity(record):
-    return TextBlob(record['text']).polarity
+    return {'hashtags': hashes, 'text': text, 'polarity': TextBlob(text).polarity}
 
 
 def get_word_lists(record):
-    return [w for w in TextBlob(record['text']).words \
-            if len(w) > 2 and w not in ['the', 'and']]
-
-
-def get_rdd_sample(rdd):
-    return rdd.sample(False, (1.0/3))
+    custom_stopwords = [w.strip() for w in os.environ.get('custom_stopwords', '').split(',')]
+    s=set(stopwords.words('english') + custom_stopwords)
+    words = [w for w in TextBlob(record['text']).words if w not in s and len(w) > 2 and '…' not in w]
+    return {'words': words, 'polarity': record['polarity']}
 
 
 if __name__ == "__main__":
@@ -80,21 +76,17 @@ if __name__ == "__main__":
     sc = SparkContext(master='spark://master:7077', appName="TwitterStreamConsumer")
     sc.setLogLevel('ERROR')
     kvs = get_stream(sc)
-
-    # Clean text and extract hashes, and then split DStream into winows for further processing
-    processed = kvs.map(extract_text_and_hashses) \
-                   .window(WINDOW_MINUTES*60,WINDOW_SLIDING_SECONDS)
-
-    # Get polarity of each cleaned tweet and print stats to the console
-    polarity = processed.map(get_polarity)
-    polarity.foreachRDD(lambda rdd: print('polarity stats: {}'.format(rdd.stats())))
-
-    # Print a random sample to the console
-    sample = processed.transform(get_rdd_sample)
-    sample.pprint()
-    
-    # get word lists of cleaned text and print to the console
+    ssc = kvs.context()
+    ssc.checkpoint('/tmp/checkpoint')
+    processed = kvs.map(extract_text_and_hashses)
     words = processed.map(get_word_lists)
-    words.pprint()
+
+    
+    flat_with_polarity = words.flatMap(lambda x: ([(w, x['polarity']) for w in x['words']]))
+    windowed = flat_with_polarity.window(15*60,30)
+    grouped_flat = windowed.groupByKey()
+    averaged_flat = grouped_flat.map(lambda x: (x[0], len(x[1]), sum(x[1])/len(x[1])))
+    averaged_flat.transform(lambda rdd: rdd.sortBy(lambda x: x[1], False)).pprint()
+
 
     run_stream(kvs.context())

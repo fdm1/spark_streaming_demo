@@ -7,4 +7,5 @@ RUN cp /spark/jars/*.jar $SPARK_HOME/jars
 RUN pip install -r /spark/requirements.txt
 
 # install nltk text mining requirement
-RUN python -m textblob.download_corpora
+RUN python -m textblob.download_corpora && \
+    python -m nltk.downloader stopwords
