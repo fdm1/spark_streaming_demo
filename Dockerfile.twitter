@@ -1,9 +1,0 @@
-FROM python:3.6-slim
-MAINTAINER https://github.com/fdm1
-
-COPY twitter_stream /twitter_stream
-WORKDIR /twitter_stream
-
-RUN pip install --requirement requirements.txt
-
-CMD [ "python", "stream.py" ]
