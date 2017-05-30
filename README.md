@@ -1,26 +1,36 @@
 ## Spark/Kafka/Twitter Stream playground
 
-**Gonna be revisiting/rewriting most/all of this**
-
 ### Requirements:
-  - You need docker and docker-compose installed and running
-  - [Create a Twitter app](https://apps.twitter.com/) and get some twitter creds. 
+- You need docker and docker-compose installed and running
+- [Create a Twitter app](https://apps.twitter.com/) and get some twitter creds.
 
-### Installation:
-
-  - `run bin/spark_setup` - This ensures you have the [gettyimages/docker-spark](https://github.com/gettyimages/docker-spark) 
-    repo cloned locally, as docker-compose needs some stuff from here.
-  - Copy the `twitter.env.tmpl` to `twitter.env`, and fill in your twitter creds
-  - Also set the topic(s) you want to follow in the `twitter.env`
+### Setup:
+- Copy the `twitter.env.tmpl` to `twitter.env`, and fill in your twitter creds
+- Also set the topic(s) you want to follow in the `twitter.env`
 
 ### Running things:
+```
+# Spin up the environment
+$ docker-compose up -d
+$ docker-compose exec master bash
 
-  - `bin/kafka-print-tweets` will stream Trump-related tweets (sent from python to kafka).
-  - `bin/spark-twitter-stream [number_of_workers (default=3)]` will spin up the cluster and run `spark/scripts/tweet_consumer.py`
+# Scripts live in `/spark_scripts/tweetstream` in the docker container.
+$ cd /spark_scripts/tweetstream
 
+# Build the JAR
+$ sbt assembly
+
+# Run the tests
+$ sbt test
+
+# Enter the console
+$ sbt console
+
+# More to come as the rewrite continues
+```
 
 ### Notes:
-- If your twitter stream is returning 401 errors (and your creds are correct), 
-  you may need to restart your docker engine. At least on OSX, the container's system time can drift 
+- If your twitter stream is returning 401 errors (and your creds are correct),
+  you may need to restart your docker engine. At least on OSX, the container's system time can drift
   if the computer goes to sleep, and this violates Twitter's Stream API need for system time to be accurate.
 
