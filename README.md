@@ -19,6 +19,11 @@ $ docker-compose exec master bash
 # Scripts live in `/spark_scripts/tweetstream` in the docker container.
 $ cd /spark_scripts/tweetstream
 
+# Run the TweetStream
+$ sbt console
+> import tweetstream.TweetStream
+> TweetStream.main(new Array(0))
+
 # Build the JAR
 $ sbt assembly
 
