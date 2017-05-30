@@ -21,7 +21,6 @@ object TweetStream {
   def main(args: Array[String]) {
     println("Initializing Streaming Spark Context...")
     val tweetStream = TwitterUtils.createStream(ssc, TwitterAuthUtils.getAuth, filter_words)
-
     val rawStatusText = tweetStream.map(TweetUtils.getRawTweetText)
     
     rawStatusText.window(Seconds(10)).print

@@ -31,18 +31,17 @@ class TweetUtilsSuite extends FunSuite with BeforeAndAfterAll {
     // sc.stop()
   }
 	
-	val FAKE_TEXT = "I'm a fake tweet"
+	val FAKE_STATUS_TEXT = "I'm a fake tweet"
 
-	def getMockTweet(isRetweet: Boolean): Status = {
+	def getMockTweet(status_text: String = FAKE_STATUS_TEXT, isRetweet: Boolean = false): Status = {
 		val status = mock(classOf[Status])
-		when(status.getText()).thenReturn(FAKE_TEXT);
+		when(status.getText()).thenReturn(status_text);
 		status
 	}
 
+	def foobar(s: String = ""): String = { "foo" }
+
 	test("'getRawTweetText' extracts a tweet's text") {
-    assert(TweetUtils.getRawTweetText(getMockTweet(false)) == FAKE_TEXT)
+    assert(TweetUtils.getRawTweetText(getMockTweet()) == FAKE_STATUS_TEXT)
   }
-
-
-
 }
