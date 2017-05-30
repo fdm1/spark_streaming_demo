@@ -18,7 +18,7 @@ object TweetStream {
   sc.setLogLevel("ERROR")
   val ssc = new StreamingContext(sc, Seconds(intervalSecs))
 
-  def main(args: Array[String]) {
+  def main(args: Array[String] = new Array(0)) {
     println("Initializing Streaming Spark Context...")
     val tweetStream = TwitterUtils.createStream(ssc, TwitterAuthUtils.getAuth, filter_words)
     val rawStatusText = tweetStream.map(TweetUtils.getRawTweetText)

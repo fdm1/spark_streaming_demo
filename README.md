@@ -22,7 +22,7 @@ $ cd /spark_scripts/tweetstream
 # Run the TweetStream
 $ sbt console
 > import tweetstream.TweetStream
-> TweetStream.main(new Array(0))
+> TweetStream.main()
 
 # Build the JAR
 $ sbt assembly
