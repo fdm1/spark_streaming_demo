@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/fdm1/kafka_spark_streaming.svg?branch=master)](https://travis-ci.org/fdm1/kafka_spark_streaming)
+
 ## Spark/Kafka/Twitter Stream playground
 
 ### Requirements:
